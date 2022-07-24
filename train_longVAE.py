@@ -97,7 +97,7 @@ if __name__=='__main__':
     set_seed(opt.seed_value)
     
     # load pretrained VAE model
-    vae_model = BetaVAE.load_from_folder(opt.trained_VAE_path).cuda()
+    vae_model = BetaVAE.load_from_folder(opt.trained_VAE_path).to(opt.device)
     vae_model = vae_model.eval()
     
     # Load data and encode into embedinngs
