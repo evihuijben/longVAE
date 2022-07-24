@@ -2,5 +2,8 @@ __pycache__
 trained_models
 
 # Dataset ignores
-datasets/*/*.pt
+datasets/*/train.pt
+datasets/*/train_missing_*.pt
+datasets/*/val.pt
+datasets/*/test.pt
 datasets/starmen/output_random/images/*
