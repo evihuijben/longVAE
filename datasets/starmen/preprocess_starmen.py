@@ -3,19 +3,57 @@ import os
 import torch
 
 
-if __name__=='__main__':
-    # Follow the steps in 'readme_starmen.txt' before executing this file
-    
-    # Load images
-    PATH = 'output_random/images'
-    imgs = sorted(os.listdir(PATH))
+def load_images(root):
+    # Load all images into torch tensors
     all_ims = []
-    for im in sorted(os.listdir(PATH)):
-        all_ims.append(torch.tensor(np.load(os.path.join(PATH, im))))
+    for im in sorted(os.listdir(root)):
+        all_ims.append(torch.tensor(np.load(os.path.join(root, im))))
     tensor = torch.cat(all_ims).reshape(-1, 10, 64, 64)
     
-    # Save training, validation and test set
-    torch.save({'data': tensor[:700]}, 'train.pt')
-    torch.save({'data': tensor[700:900]}, 'val.pt')
-    torch.save({'data': tensor[900:]}, 'test.pt')
+    # Create training, validation and test split
+    all_sets = {'train': tensor[:700],
+                'val': tensor[700:900],
+                'test': tensor[900:]}
+    return all_sets
+
+def save_tensors(all_sets):
+    # Save all sets
+    for phase in all_sets.keys():
+        torch.save({'data': all_sets[phase]}, f'{phase}.pt')
+
+def save_masked_training_set(data):
+    # provided mask details:
+    probability =  0.5
     
+    fname = f'masks_missing_{probability}.pt'
+    mask = torch.load(fname)
+    
+    expanded_mask = torch.cat(
+        [torch.ones((mask.shape[0], 1, ),
+                    dtype=torch.bool),
+         mask],
+        dim=-1).unsqueeze(2).unsqueeze(3)
+    
+    expanded_mask = expanded_mask.repeat((1, 1, data.shape[2], data.shape[3]))
+    torch.save({'data': (expanded_mask*data),
+                'mask': mask.type(torch.float32)},
+               f'train_missing_{probability}.pt')
+        
+        
+    
+
+if __name__=='__main__':
+    # Follow the steps in 'readme_starmen.txt' before executing this file.
+    dataroot = 'output_random/images'    
+    
+    # Load images
+    print('>> Preprocessing starmen data ...')
+    sets = load_images(dataroot)
+    
+    # save full dataset as tensors
+    save_tensors(sets)
+    
+    # save masked dataset for training with missing data
+    save_masked_training_set(sets['train'])
+    
+    print('>> Done')
