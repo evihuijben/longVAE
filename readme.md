@@ -13,7 +13,12 @@ This code is developped on a Linux system, it is not guaranteed that this code w
 Dataset details of the used datasets (Starmen, CelebA, and ADNI) are provided in the readme files of the corresponding folders in 'datasets'. To use a custom dataset save a 'train.pt', 'val.pt', and 'test.pt' file containing a dictionary with under 'data' a torch tensor. When your custom dataset has a fixed number of observations per subject, this data tensor is saved in the format \[N\_subjects, N\_observations, image\_size, image\_size\]. When your custom dataset has a varying number of observations the dictionary with the key 'data' should contain a list with all the subjects, saved in the format \[N\_observations, image\_size, image\_size\].
 
 # Usage
+## Step 1: Train the VAE
+To pretrain the VAE, run the 'train_VAE.py' file with the desired parameters. The paramters for reproducing the experiments from the paper can be seen in 'script.sh'
+
+
+## Step 2: Train the genrative model (longVAE)
+To train the generative model, run the 'train_longVAE.py' file with the desired parameters. The paramters for reproducing the experiments from the paper can be seen in 'script.sh'
 
 # Citing
-
-
+TBD
