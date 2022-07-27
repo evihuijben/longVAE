@@ -3,15 +3,20 @@ import torch
 from torch.utils.data import DataLoader
 
     
-# feature processing
-class Dataset(torch.utils.data.Dataset):
-    def __init__(self, digits, varying_length=False, **kwargs):
+class EmbeddingDataset(torch.utils.data.Dataset):
+    # Dataset class for feature processing
+    def __init__(self, embeddings, varying_length=False, **kwargs):
+        self.data = embeddings
+        
         self.varying_length = varying_length
         if self.varying_length:
+            # Define observation times for sequences with varying length
             self.times = kwargs.pop('times')
         else:
+            # Define mask if data is artificially removed from sequences
+            # with a fixed number of observations
             self.mask = kwargs.pop('mask', None)
-        self.data = digits
+        
 
     def __len__(self):
         return len(self.data)
@@ -20,35 +25,65 @@ class Dataset(torch.utils.data.Dataset):
         "Generates one sample of data"
         x = self.data[index]
         sample = {'data': x}
+        
         if self.varying_length:
             sample['times'] = self.times[index].squeeze(0).to(x.device)
         else:
+            if self.mask == None:
+                # When no mask is provided, all observations are considered
+                mask = torch.ones((x.shape[0])).type(torch.float)
             if self.mask is not None:
+                # Add a 1 for indiciating the mask at t0
                 mask = torch.cat((torch.tensor([1.]).to(self.mask.device),
                                   self.mask[index]))
-            else:
-                mask = torch.ones((x.shape[0])).type(torch.float)
             sample['mask'] = mask.to(x.device)
         return sample
 
 
 def normalize_times_for_varying_length(times):
-    # Times should be normalized between 0 and 1 for the minimum and maximum
-    # observation time of the entire population.
-    max_time = times[0][0]
-    min_time = times[0][0]
-    for i in range(len(times)):
-        if torch.max(times[i]) > max_time:
-            max_time = torch.max(times[i])
-        if torch.min(times[i]) < min_time:
-            min_time = torch.min(times[i])
+    """
+    Normalize observation times between 0 and 1 for the minimum and maximum
+    observation time of the entire population.
+
+    Parameters
+    ----------
+    times : [torch tensor]
+        List of all the observation times per subject.
+
+    Returns
+    -------
+    times : [torch tensor]
+        List of all the normalized observation times per subject..
+
+    """
+    # Find minimum and maximum observation time
+    max_time = max([torch.max(t) for t in times])
+    min_time = min([torch.min(t) for t in times])
+    # normalize times
     for i in range(len(times)):
         times[i] = (times[i] - min_time) / (max_time - min_time)
     return times
 
 def extract_features(opt, vae_model, data):
+    """
+    Extract features by inputting the image data into the encoder of the VAE
+
+    Parameters
+    ----------
+    opt : argparser
+        Parameters defining this run.
+    vae_model : torch neural network module
+        VAE model defined by pythae.
+    data : torch tensor
+        Image data.
+
+    Returns
+    -------
+    all_embeds : torch tensor
+        Features obtained from encoding image data.
+
+    """
     # Encode the data into embeddings using the pretrained VAE
-    
     vae_model.to(opt.device)
     vae_model.eval()
     with torch.no_grad():
@@ -78,12 +113,28 @@ def extract_features(opt, vae_model, data):
                 all_embeds.append(this_embed.reshape(-1, 
                                                      opt.n_steps, 
                                                      vae_model.latent_dim))
-                
             all_embeds = torch.cat(all_embeds, dim=0)
     return all_embeds
     
 
 def load_data_longVAE(opt, vae_model):
+    """
+    
+
+    Parameters
+    ----------
+    opt : argparser
+        Parameters defining this run.
+    vae_model : torch neural network module
+        VAE model defined by pythae.
+
+    Returns
+    -------
+    embedding_loaders : dict
+        A dictionary with dataloaders containing the embedded features for all
+        phases in opt.splits.
+
+    """
     shuffles = {'train': True, 
                 'val': False, 
                 'test': False}
@@ -101,9 +152,12 @@ def load_data_longVAE(opt, vae_model):
             times = normalize_times_for_varying_length(loaded['times'])
         else:
             if phase == 'train' and opt.missing_data_prob>=0 and opt.missing_data_prob<1:
+                # load data containing masked observations that were
+                # artificially removed by sampling
                 loaded = torch.load(os.path.join(opt.dataroot, f'{phase}_missing_{opt.missing_data_prob}.pt'))
                 mask = loaded['mask']            
             else:
+                # Load full dataset
                 loaded = torch.load(os.path.join(opt.dataroot, f'{phase}.pt'))
                 mask = None
             datatensor = loaded['data']
@@ -111,10 +165,10 @@ def load_data_longVAE(opt, vae_model):
         # Encode data into embeddings and define the dataset for the embeddings
         embeddings = extract_features(opt, vae_model, datatensor)
         if opt.varying_length:
-            dataset = Dataset(embeddings, opt.varying_length, times=times)
+            dataset = EmbeddingDataset(embeddings, opt.varying_length, times=times)
             this_batchsize=1
         else:
-            dataset = Dataset(embeddings, opt.varying_length, mask=mask)
+            dataset = EmbeddingDataset(embeddings, opt.varying_length, mask=mask)
             if  bs[phase] == None:
                 this_batchsize = embeddings.shape[0]
             else:

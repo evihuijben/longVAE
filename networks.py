@@ -16,47 +16,44 @@ class Encoder_VAE_CELEBA(BaseEncoder):
         self.input_dim = (args.n_channels, args.isize, args.isize)
         self.latent_dim = args.latent_dim
         self.n_channels = args.n_channels
+        
+        
+        
+        n_down = 4
+        k, s, p = 4, 2, 1 # kernel, stride, padding
+        in_channels = self.n_channels
+        out_channels = 128
+        new_size = args.isize
         layers = nn.ModuleList()
-        layers.append(
-            nn.Sequential(
-                nn.Conv2d(self.n_channels, 128, 4, 2, padding=1),
-                nn.BatchNorm2d(128),
-                nn.ReLU(),
-            )
-        )
-        layers.append(
-            nn.Sequential(
-                nn.Conv2d(128, 256, 4, 2, padding=1),
-                nn.BatchNorm2d(256),
-                nn.ReLU(),
-            )
-        )
-        layers.append(
-            nn.Sequential(
-                nn.Conv2d(256, 512, 4, 2, padding=1),
-                nn.BatchNorm2d(512),
-                nn.ReLU(),
-            )
-        )
-        layers.append(
-            nn.Sequential(
-                nn.Conv2d(512, 1024, 4, 2, padding=1),
-                nn.BatchNorm2d(1024),
-                nn.ReLU(),
-            )
-        )
+        for i in range(n_down):
+            layers.append(nn.Sequential(
+                nn.Conv2d(in_channels, out_channels, k, s, padding=p),
+                nn.BatchNorm2d(out_channels),
+                nn.ReLU()))
+            in_channels = out_channels
+            out_channels *= 2
+            new_size = int(((new_size + 2*p -k)/s) + 1)
+
         self.layers = layers
         self.depth = len(layers)
-        self.embedding = nn.Linear(1024 * 4 * 4, args.latent_dim)
-        self.log_var = nn.Linear(1024 * 4 * 4, args.latent_dim)
+        self.embedding = nn.Linear(in_channels * new_size * new_size, args.latent_dim)
+        self.log_var = nn.Linear(in_channels * new_size * new_size, args.latent_dim)
     def forward(self, x: torch.Tensor, output_layer_levels=None):
-        """Forward method
-        Args:
-            output_layer_levels (List[int]): The levels of the layers where the outputs are
-                extracted. If None, the last layer's output is returned. Default: None.
-        
-        Returns:
-            ModelOutput: An instance of ModelOutput containing the embeddings of the input data 
+        """
+        Forward pass
+
+        Parameters
+        ----------
+        x : torch.Tensor
+            Input image.
+        output_layer_levels : [int], optional
+            The levels of the layers where the outputs are extracted. If None, 
+            the last layer's output is returned.. The default is None.
+
+        Returns
+        -------
+        output : An instance of ModelOutput
+            An instance of ModelOutput containing the embeddings of the input data 
             under the key `embedding` and the **log** of the diagonal coefficient of the covariance 
             matrices under the key `log_covariance`. Optional: The outputs of the layers specified 
             in `output_layer_levels` arguments are available under the keys `embedding_layer_i` 
@@ -98,6 +95,7 @@ class Decoder_AE_CELEBA(BaseDecoder):
         self.n_channels = args.n_channels
         
         layers = nn.ModuleList()
+                
         layers.append(
             nn.Sequential(
                 nn.Linear(args.latent_dim, 1024 * 8 * 8)
@@ -133,16 +131,26 @@ class Decoder_AE_CELEBA(BaseDecoder):
         self.layers = layers
         self.depth = len(layers)
     def forward(self, z: torch.Tensor, output_layer_levels=None):
-        """Forward method
-        Args:
-            output_layer_levels (List[int]): The levels of the layers where the outputs are
-                extracted. If None, the last layer's output is returned. Default: None.
-        
-        Returns:
-            ModelOutput: An instance of ModelOutput containing the reconstruction of the latent code 
-            under the key `reconstruction`. Optional: The outputs of the layers specified in 
-            `output_layer_levels` arguments are available under the keys `reconstruction_layer_i` 
-            where i is the layer's level.
+        """
+        Forward pass
+
+        Parameters
+        ----------
+        z : torch.Tensor
+            DESCRIPTION.
+        output_layer_levels : [int], optional
+            The levels of the layers where the outputs are extracted. If None,
+            the last layer's output is returned. The default is None.
+
+        Returns
+        -------
+        output : An instance of ModelOutput
+            An instance of ModelOutput containing the reconstruction of the 
+            latent code under the key `reconstruction`. Optional: The outputs 
+            of the layers specified in `output_layer_levels` arguments are 
+            available under the keys 'reconstruction_layer_i' where i is the 
+            layer's level.
+
         """
         output = ModelOutput()
         max_depth = self.depth
@@ -175,6 +183,7 @@ class Encoder_VAE_192(BaseEncoder):
     """
     def __init__(self, args):
         BaseEncoder.__init__(self)
+        # Define the amount of padding if the image size is smaller than 192
         desired_size = 192
         if args.isize < desired_size:
             pad1 = (desired_size - args.isize)//2
@@ -187,25 +196,41 @@ class Encoder_VAE_192(BaseEncoder):
         n_down = 5
         k, s, p = 4, 2, 1  # kernel, stride, padding
     
-        ngf = 64     # starting number of encoder features
+        in_channels = args.n_channels
+        out_channels = 64     # starting number of encoder features
         layers = []
         new_size = desired_size
         for layer_i in range(n_down):
-            if layer_i == 0:
-                layers.append(nn.Conv2d(args.n_channels, ngf, k, s, p))
-            else:
-                layers.append(nn.Conv2d(ngf, 2*ngf, k, s, p))
-                ngf *= 2
-            layers.append(nn.BatchNorm2d(ngf))
+            layers.append(nn.Conv2d(in_channels, out_channels, k, s, p))
+            layers.append(nn.BatchNorm2d(out_channels))
             layers.append(nn.ReLU())
+            
+            in_channels = out_channels
+            out_channels *= 2
             new_size = int(((new_size + 2*p -k)/s) + 1)
             
         self.layers = nn.Sequential(*layers)
-        nfcf = ngf*new_size*new_size
-        self.fc_mu = nn.Linear(nfcf, args.latent_dim)
-        self.fc_log_var = nn.Linear(nfcf, args.latent_dim)
+        self.fc_mu = nn.Linear(in_channels*new_size*new_size, args.latent_dim)
+        self.fc_log_var = nn.Linear(in_channels*new_size*new_size, args.latent_dim)
     
     def forward(self, x):
+        """
+        Forward pass
+
+        Parameters
+        ----------
+        x : torch.Tensor
+            Input image.
+
+        Returns
+        -------
+        output : An instance of ModelOutput
+            An instance of ModelOutput containing the embeddings of the input 
+            data under the key `embedding` and the **log** of the diagonal 
+            coefficient of the covariance matrices under the key `log_covariance`. 
+            where i is the layer's level.
+
+        """
         if self.padding:
             x = F.pad(x, self.padding)
             
@@ -268,10 +293,24 @@ class Decoder_AE_192(BaseDecoder):
             
         self.layers = nn.Sequential(*layers)
         
-    def forward(self, x):
+    def forward(self, z):
+        """
+        Forward pass
+
+        Parameters
+        ----------
+        z : torch.Tensor
+            DESCRIPTION.
+
+        Returns
+        -------
+        output : An instance of ModelOutput
+            An instance of ModelOutput containing the reconstruction of the 
+            latent code under the key `reconstruction`. 
+        """
         output = ModelOutput()
-        out = self.fc(x)
-        out = out.reshape(x.shape[0], self.ngf, self.final_size, self.final_size)
+        out = self.fc(z)
+        out = out.reshape(z.shape[0], self.ngf, self.final_size, self.final_size)
         out = self.layers(out)
         if self.removing:
             out = out[:, :, self.removing[0]:-self.removing[1],

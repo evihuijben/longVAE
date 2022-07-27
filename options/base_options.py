@@ -16,7 +16,7 @@ class BaseOptions():
         self.parser.add_argument('--n_channels', type=int, default=1, help='Number of channels')
         self.parser.add_argument('--isize', type=int, default=64, help='Size of the image')
         self.parser.add_argument('--varying_length', action='store_true', help='True if the longitudinal dataset has a varying number of observations per subject')
-        self.parser.add_argument('--n_steps', type=int, help='Number of steps for a longitudinal dataset with a fixed number of observations per subject')
+        self.parser.add_argument('--n_steps', type=int, default=10, help='Number of steps for a longitudinal dataset with a fixed number of observations per subject')
         self.parser.add_argument('--missing_data_prob', type=float, default=-1, help='Probablity of randomly removing samples from a sequence, set to -1 for including all data.')
                 
         # training parameters
@@ -39,6 +39,14 @@ class BaseOptions():
 
         
     def initialize(self):
+        """
+        Initialize base options: define paths and device.
+
+        Returns
+        -------
+        None.
+
+        """
         self.opt.dataroot = os.path.join(self.opt.dataroot, self.opt.dataset_name)
         self.opt.splits = ['train', self.opt.eval_phase]
         

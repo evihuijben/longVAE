@@ -11,7 +11,7 @@ def set_seed(seed_value, pytorch=True):
     seed_value : int
         Seed value.
     pytorch : bool
-        Whether the torch seed should also be set
+        Whether the torch seed should also be set. The default is True.
 
     Returns
     -------
@@ -27,18 +27,20 @@ def set_seed(seed_value, pytorch=True):
 
 def save_options(opt, find_run=False):
     """
-    Set seed for deterministic behavior
+    Save the training parameters in opt.savedir folder    
 
     Parameters
     ----------
     opt : argparser
-        Parameters that need to be saved.
-    find_run : bool (optional)
-        If True, find the last run where the options should be saved
+        Parameters defining this run.
+    find_run : bool, optional
+        If True, find the last run where the options should be saved. The 
+        default is False.
 
     Returns
     -------
     None.
+
     """
     if find_run:
         run = sorted(os.listdir(opt.savedir))[-1]

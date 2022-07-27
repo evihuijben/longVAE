@@ -5,11 +5,17 @@ class TensorfileDataset():
     def __init__(self, opt, phase):
         self.opt = opt
         if opt.varying_length:
-            self.datatensor = torch.load(os.path.join(opt.dataroot, f'{phase}.pt'))['data']
+            # Load datatensor list containing elements of shape [seq_length, isize, isize]
+            self.datatensor = torch.load(os.path.join(opt.dataroot, f'{phase}.pt'))['data'] 
+            # Concatenate all images since longitudinal info is not needed for the VAE
             self.datatensor = torch.cat(self.datatensor, dim = 0)
         else:
             if phase == 'train' and opt.missing_data_prob>=0 and opt.missing_data_prob<1:
-                loaded = torch.load(os.path.join(opt.dataroot, f'{phase}_missing_{opt.missing_data_prob}.pt'))
+                fname = os.path.join(opt.dataroot, f'{phase}_missing_{opt.missing_data_prob}.pt')
+                assert os.path.isfile(fname), "Datset file '{fname}' does not exist. Please run the preprocessing files first"
+                
+                # Load data and mask
+                loaded = torch.load(fname)
                 self.datatensor = loaded['data']
                 self.mask = loaded['mask']
                 
@@ -40,6 +46,20 @@ class TensorfileDataset():
         
         
 def load_dataset(opt):
+    """
+    Define datasets for all phases defined by opt.splits
+
+    Parameters
+    ----------
+    opt : argparser
+        Parameters defining this run.
+
+    Returns
+    -------
+    dataset : dict
+        Dataset objects for every phase defined by opt.splits.
+
+    """
     dataset = {}
     for phase in opt.splits:
         dataset[phase] = TensorfileDataset(opt, phase=phase)

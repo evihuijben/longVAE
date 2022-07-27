@@ -12,7 +12,15 @@ class VAEOptions(BaseOptions):
         self.parser.add_argument('--latent_dim', type=int, default=8, help="Number of features in the latent space")
         
     def parse(self):
-        
+        """
+        Parse arguments and initialize them
+
+        Returns
+        -------
+        opt : argparser
+            Parameters defining this run.
+
+        """
         self.opt = self.parser.parse_args()
         self.initialize()
         

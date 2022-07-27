@@ -1,6 +1,6 @@
 from options.longvae_options import LongVAEOptions
 from data.longvae_data import load_data_longVAE
-from models import LongVAE
+from model import LongVAE
 from utils import set_seed
 
 
@@ -10,6 +10,24 @@ import torch.optim as optim
 
 
 def train(model, opt, dataloaders):
+    """
+    Training loop for the generative model (longVAE)
+
+    Parameters
+    ----------
+    model : torch neural network module
+        The generative model (longVAE).
+    opt : argparser
+        Parameters defining this run.
+    dataloaders : dict
+        torch dataloaders containing the embeddings for 'train' and opt.eval_phase.
+
+    Returns
+    -------
+    best_model : torch neural network module
+        Trained model of the best epoch (based on opt.eval_phase set).
+
+    """
     best_loss, best_model = 1e10, None
     
     # define optimizer
@@ -40,6 +58,28 @@ def train(model, opt, dataloaders):
 
 
 def train_step(model, opt, optimizer, train_loader, epoch):
+    """
+    Training of one epoch
+
+    Parameters
+    ----------
+    model : torch neural network module
+        The generative model (longVAE).
+    opt : argparser
+        Parameters defining this run.
+    optimizer : torch optimizer
+        Adam optimizer.
+    train_loader : torch dataloader
+        torch dataloaders containing the training embeddings.
+    epoch : int
+        Current epoch.
+
+    Returns
+    -------
+    epoch_loss : float
+        Mean training loss for this epoch.
+
+    """
     model.train()
     epoch_loss = 0
     for i, batch in enumerate(train_loader):
@@ -60,6 +100,26 @@ def train_step(model, opt, optimizer, train_loader, epoch):
 
 
 def eval_step(model, opt, eval_loader, epoch):
+    """
+    Forward pass for evaluation set
+
+    Parameters
+    ----------
+    model : torch neural network module
+        The generative model (longVAE).
+    opt : argparser
+        Parameters defining this run.
+    eval_loader : torch dataloader
+        torch dataloaders containing the evaluation embeddings.
+    epoch : int
+        Current epoch.
+
+    Returns
+    -------
+    epoch_loss : float
+        Mean evaluation loss for this epoch.
+
+    """
     model.eval()
     epoch_loss = 0
     for i, batch in enumerate(eval_loader):
@@ -77,12 +137,32 @@ def eval_step(model, opt, eval_loader, epoch):
 
 
 def save_weights(model, opt, epoch, best=True):
+    """
+    Save trained model weights
+
+    Parameters
+    ----------
+    model : torch neural network module
+        The generative model (longVAE).
+    opt : argparser
+        Parameters defining this run.
+    epoch : int
+        Current epoch.
+    best : bool, optional
+        Whether these model weights were showing the best evaluation loss so 
+        far. If False the label of the epoch is added to the file. The default 
+        is True.
+
+    Returns
+    -------
+    None.
+
+    """
     if best == True:
         fname = f"{opt.weights_dir}.pt"
     else:
         fname = f"{opt.weights_dir}_{epoch}.pt"
         
-    # hier, kan opt weg?
     save_dict = {'model_state_dict': model.state_dict(),
                 'training_config': opt,
                 'epoch': epoch}
