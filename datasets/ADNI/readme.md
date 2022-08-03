@@ -1,7 +1,6 @@
 # Downloading and preparation of ADNI data
 
-1. Download ADNI data from https://adni.loni.usc.edu/. The ID numbers that were
-used for our work are provided in the file 'ADNI\_dataset\_details.csv'.
+1. Download ADNI data from https://adni.loni.usc.edu/. The ID numbers that were used for our work are provided in the file csv files.
 
 2. Apply preprocessing steps as described in the supplementary material of our work, this includes the following:
    * Applying N4 bias field correction using [ANTs](https://stnava.github.io/ANTs)
