@@ -21,26 +21,27 @@ def save_tensors(all_sets):
     for phase in all_sets.keys():
         torch.save({'data': all_sets[phase]}, f'{phase}.pt')
 
-def save_masked_training_set(data):
+def save_masked_sets(sets):
     # provided mask details:
     probability =  0.5
     
     fname = f'masks_missing_{probability}.pt'
-    mask = torch.load(fname)
+    masks = torch.load(fname)
     
-    expanded_mask = torch.cat(
-        [torch.ones((mask.shape[0], 1, ),
-                    dtype=torch.bool),
-         mask],
-        dim=-1).unsqueeze(2).unsqueeze(3)
-    
-    expanded_mask = expanded_mask.repeat((1, 1, data.shape[2], data.shape[3]))
-    torch.save({'data': (expanded_mask*data),
-                'mask': mask.type(torch.float32)},
-               f'train_missing_{probability}.pt')
+    for phase in ['train', 'val', 'test']:
+        data = sets[phase]
+        mask = masks[phase]
         
+        expanded_mask = torch.cat(
+            [torch.ones((mask.shape[0], 1, ),
+                        dtype=torch.bool),
+             mask],
+            dim=-1).unsqueeze(2).unsqueeze(3)
+        expanded_mask = expanded_mask.repeat((1, 1, data.shape[2], data.shape[3]))
         
-    
+        torch.save({'data': (expanded_mask*data),
+                    'mask': mask.type(torch.float32)},
+                   f'{phase}_missing_{probability}.pt')
 
 if __name__=='__main__':
     # Follow the steps in 'readme_starmen.txt' before executing this file.
@@ -54,6 +55,6 @@ if __name__=='__main__':
     save_tensors(sets)
     
     # save masked dataset for training with missing data
-    save_masked_training_set(sets['train'])
+    save_masked_sets(sets)
     
     print('>> Done')
