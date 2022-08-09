@@ -2,6 +2,7 @@ from options.longvae_options import LongVAEOptions
 from data.longvae_data import load_data_longVAE
 from model import LongVAE
 from utils import set_seed
+import os
 
 
 from pythae.models import BetaVAE
@@ -49,8 +50,7 @@ def train(model, opt, dataloaders):
             save_weights(model, opt, epoch, best=True)                            
             
         # output training information and save intermediate model weights
-        # if epoch % 20 == 0:
-        if epoch % 1 == 0:
+        if epoch % 50 == 0:
             print(f'Epoch {epoch}: Train loss: {train_loss}\t Eval loss: {eval_loss}')
         if epoch % opt.save_freq == 0:
             save_weights(model, opt, epoch, best=False)
@@ -159,9 +159,9 @@ def save_weights(model, opt, epoch, best=True):
 
     """
     if best == True:
-        fname = f"{opt.weights_dir}.pt"
+        fname = os.path.join(opt.savedir, 'final_model.pt')
     else:
-        fname = f"{opt.weights_dir}_{epoch}.pt"
+        fname = os.path.join(opt.savedir, f'final_model_{epoch}.pt')
         
     save_dict = {'model_state_dict': model.state_dict(),
                 'training_config': opt,

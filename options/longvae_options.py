@@ -20,6 +20,9 @@ class LongVAEOptions(BaseOptions):
         self.parser.add_argument('--batchsize_eval', type=int, default=None, help='Batchsize evaluation step of longVAE. If None: size of evaluation dataset')
         self.parser.add_argument('--batchsize_VAE_eval', type=int, default=100, help='Batchsize for inference of pretrained VAE')
         
+        self.parser.add_argument('--no_train', action='store_true', help="Set to true if a pretrained model should be loaded for inference")
+        self.parser.add_argument('--pretrained_longVAE_ID', type=str, help="ID of a pretrained model which can be used for generation, imputation and synthesis")
+        
     def parse(self):
         """
         Parse arguments, initialize them, and load predefined parameters
@@ -34,6 +37,7 @@ class LongVAEOptions(BaseOptions):
         self.opt = self.parser.parse_args()
         self.initialize()
         
+        
         # initialize specific arguments for longVAE based on the pretrained VAE
         self.opt.trained_VAE_path = os.path.join(self.opt.savedir, 
                                                  'VAE', 
@@ -46,14 +50,18 @@ class LongVAEOptions(BaseOptions):
         self.opt.input_dim = self.opt.VAE_config['input_dim']
         
         # Define new time stamp for longVAE training
-        signature = (str(datetime.datetime.now())[0:19].replace(" ", "_").replace(":", "-"))
-        self.opt.ID = f"longVAE_training_{signature}"
-        self.opt.savedir = os.path.join(self.opt.savedir, 'longVAE', self.opt.dataset_name, self.opt.ID)
-        os.makedirs(self.opt.savedir)
-        self.opt.weights_dir = os.path.join(self.opt.savedir, 'final_model')
+        if self.opt.no_train:
+            self.opt.ID = self.opt.pretrained_longVAE_ID
+        else:
+            signature = (str(datetime.datetime.now())[0:19].replace(" ", "_").replace(":", "-"))
+            self.opt.ID = f"longVAE_training_{signature}"
         
-        # Save the training options for documentation
-        save_options(self.opt)
+        self.opt.savedir = os.path.join(self.opt.savedir, 'longVAE', self.opt.dataset_name, self.opt.ID)
+        
+        if not self.opt.no_train:
+            os.makedirs(self.opt.savedir)
+            # Save the training options for documentation
+            save_options(self.opt)
         return self.opt   
         
         
