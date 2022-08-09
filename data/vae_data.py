@@ -6,7 +6,8 @@ class TensorfileDataset():
         self.opt = opt
         if opt.varying_length:
             # Load datatensor list containing elements of shape [seq_length, isize, isize]
-            self.datatensor = torch.load(os.path.join(opt.dataroot, f'{phase}.pt'))['data'] 
+            self.datatensor = torch.load(os.path.join(opt.dataroot, f'{phase}.pt'),
+                                         map_location=opt.device)['data'] 
             # Concatenate all images since longitudinal info is not needed for the VAE
             self.datatensor = torch.cat(self.datatensor, dim = 0)
         else:
@@ -15,7 +16,7 @@ class TensorfileDataset():
                 assert os.path.isfile(fname), "Datset file '{fname}' does not exist. Please run the preprocessing files first"
                 
                 # Load data and mask
-                loaded = torch.load(fname)
+                loaded = torch.load(fname, map_location=opt.device)
                 self.datatensor = loaded['data']
                 self.mask = loaded['mask']
                 
@@ -28,7 +29,8 @@ class TensorfileDataset():
                 self.datatensor = torch.cat(not_missing, dim=0)
                 
             else:
-                self.datatensor = torch.load(os.path.join(opt.dataroot, f'{phase}.pt'))['data']
+                self.datatensor = torch.load(os.path.join(opt.dataroot, f'{phase}.pt'),
+                                             map_location=opt.device)['data']
                     
         # Reshape data to the desired size
         self.datatensor = self.datatensor.reshape(-1, opt.n_channels, opt.isize, opt.isize).to(opt.device)

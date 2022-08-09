@@ -147,18 +147,21 @@ def load_data_longVAE(opt, vae_model):
     embedding_loaders = {}
     for phase in opt.splits:
         if opt.varying_length:
-            loaded = torch.load(os.path.join(opt.dataroot, f'{phase}.pt'))
+            loaded = torch.load(os.path.join(opt.dataroot, f'{phase}.pt'),
+                                map_location=opt.device)
             datatensor = loaded['data']
             times = normalize_times_for_varying_length(loaded['times'])
         else:
             if phase == 'train' and opt.missing_data_prob>=0 and opt.missing_data_prob<1:
                 # load data containing masked observations that were
                 # artificially removed by sampling
-                loaded = torch.load(os.path.join(opt.dataroot, f'{phase}_missing_{opt.missing_data_prob}.pt'))
+                loaded = torch.load(os.path.join(opt.dataroot, f'{phase}_missing_{opt.missing_data_prob}.pt'),
+                                    map_location=opt.device)
                 mask = loaded['mask']            
             else:
                 # Load full dataset
-                loaded = torch.load(os.path.join(opt.dataroot, f'{phase}.pt'))
+                loaded = torch.load(os.path.join(opt.dataroot, f'{phase}.pt'),
+                                    map_location=opt.device)
                 mask = None
             datatensor = loaded['data']
         

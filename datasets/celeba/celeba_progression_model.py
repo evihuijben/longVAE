@@ -128,7 +128,8 @@ def process(opt):
     for phase, sample_n in zip(opt.splits, opt.sample_n):
         print(f">>> Processing {phase} set ...")
         
-        x = torch.load(os.path.join(opt.dataroot, f"{phase}.pt"))
+        x = torch.load(os.path.join(opt.dataroot, f"{phase}.pt"),
+                       map_location=torch.device('cpu'))
         n_subjects = x['data'].shape[0]
         
            
