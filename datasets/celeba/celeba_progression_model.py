@@ -68,18 +68,8 @@ def make_grayscale(im):
     return np.array(im)
 
 def change_intensities(im, delta):
-    """
-    Apply a non-linear intensity transformation
-    """
-    # First normalize image between 0 and 1
     im = (im - im.min())/(im.max() - im.min())
-    # Define the power
-    x = 1+abs(delta)
-    if delta == -1:
-        power = 1/x
-    else: 
-        power = x
-    im = np.power(im, power)
+    im = np.power(im, 1+delta)
     return im
 
 def grow(im, delta_grow, isize):
@@ -152,9 +142,8 @@ def process(opt):
                 print(f"\t{phase}: {ind}/{len(all_subjects)}")
             
             # Sample alpha (intensity transform parameter)
-            final_alpha_max = np.random.uniform(opt.sample_alpha_max[0],
-                                                opt.sample_alpha_max[1])
-            final_alpha = random.choice([-1, 1]) * final_alpha_max
+            final_alpha = np.random.uniform(opt.sample_alpha_max[0],
+                                            opt.sample_alpha_max[1])
             # Sample new image size, based on beta (growthfactor)
             increase_n_pixels = np.random.randint(
                 int(np.round(opt.isize * (opt.sample_beta[0]-1))),
