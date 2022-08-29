@@ -20,11 +20,10 @@ class BaseOptions():
         self.parser.add_argument('--missing_data_prob', type=float, default=-1, help='Probablity of randomly removing samples from a sequence, set to -1 for including all data.')
                 
         # training parameters
-        self.parser.add_argument('--lr', type=float, default = 0.001, help='learning rate')
+        self.parser.add_argument('--lr', type=float, default = 0.0001, help='learning rate')
         self.parser.add_argument('--n_epochs', type=int, default = 100, help='number of epochs')
-        self.parser.add_argument('--batchsize_train', type=int, default=100, help='Batchsize for training')
-        
-        
+        self.parser.add_argument('--batchsize', type=int, default=100, help='Batchsize for training')
+
         # model parameters
         self.parser.add_argument('--beta', type=float, default=1, help='Weight for the KL divergence loss')
         
@@ -35,9 +34,7 @@ class BaseOptions():
         self.parser.add_argument('--seed_value', type=int, default=0, help='Seed value to make the runs deterministic')
         self.parser.add_argument('--eval_phase', type=str, default='val')
         
-        
 
-        
     def initialize(self):
         """
         Initialize base options: define paths and device.

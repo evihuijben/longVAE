@@ -40,46 +40,49 @@ class LongVAE(nn.Module):
         if not self.varying_length:
             self.n_steps = opt.n_steps
             input_size_RNN = opt.latent_dim
-            input_size = opt.latent_dim
         else:
             input_size_RNN = opt.latent_dim + 1
-            input_size = opt.latent_dim
-        
+
         self.beta = opt.beta
         self.warmup_epoch = 0
-  
+
         # Define eta and tau priors for KL divergence
         self.log_var_eta_prior = torch.log(torch.tensor([float(opt.LongVAE_priors)], requires_grad=False)).to(opt.device)
         self.log_var_tau_prior = torch.log(torch.tensor([float(opt.LongVAE_priors)], requires_grad=False)).to(opt.device)
-        
-        # Network layers to estimate spatial parameters (MLP1)
-        self.fc_lbd = nn.Sequential(
-            nn.Linear(input_size, 512),
-            nn.ReLU(),
-            nn.Linear(512, 128), 
-            nn.ReLU()
-        )
-        self.mu_lbd = nn.Linear(128, opt.latent_dim-1)
-        self.log_var_lbd = nn.Linear(128, opt.latent_dim-1)
-        
-        
+
         # RNN network and linear layers to estimate eta and tau (RNN)
         self.rnn = nn.RNN(input_size=input_size_RNN,
                           hidden_size=opt.hidden, 
                           num_layers=3)
+
+        # First layers to estimate spatial parameters (MLP1)
+        self.fc_lbd = nn.Sequential(
+            nn.Linear(opt.latent_dim, 512),
+            nn.ReLU(),
+            nn.Linear(512, 128), 
+            nn.ReLU()
+        )
+
+        # Linear layer to estimate eta and tau (RNN)
         self.fc = nn.Linear(opt.hidden, 128)
+
+        # Mean & logvar layers to estimate spatial parameters (MLP1)
+        self.mu_lbd = nn.Linear(128, opt.latent_dim-1)
+        self.log_var_lbd = nn.Linear(128, opt.latent_dim-1)
+
+        # Mean & logvar layersto estimate eta and tau (RNN)
         self.mu_eta = nn.Linear(128, 1)
         self.log_var_eta = nn.Linear(128, 1)
         self.mu_tau = nn.Linear(128, 1)
         self.log_var_tau = nn.Linear(128, 1)
-        
-        
+
         # Decoder network layers (MLP2)
         self.decoder = nn.Sequential(
             nn.Linear(opt.latent_dim, 512),
             nn.ReLU(),
-            nn.Linear(512, input_size)
+            nn.Linear(512, opt.latent_dim)
         )
+
 
     def step(self, x, visit_time=None, eval_visit_time=None):
         """
@@ -161,7 +164,6 @@ class LongVAE(nn.Module):
                     }
         return recon_x, features
 
-
     def forward(self, x, **kwargs):
         """
         Forward pass and calculation of loss function
@@ -209,7 +211,6 @@ class LongVAE(nn.Module):
         )
         return output
 
-
     def extrapolate_traj(self, x, **kwargs):
         """
         Generate reconstructed embeddings for all time points when the dataset
@@ -239,7 +240,6 @@ class LongVAE(nn.Module):
         else:
             recon_x, _ = self.step(x)
         return recon_x
-    
 
     def _sample_gauss(self, mu, std):
         """
@@ -305,7 +305,6 @@ class LongVAE(nn.Module):
                     reduction="none",
                 ).sum(dim=-1)
             
-
         KLD_lbd = -0.5 * torch.sum(1 + log_var_lbd - mu_lbd.pow(2) - log_var_lbd.exp(), dim=-1)
         KLD_eta = -0.5 * torch.sum(1 + log_var_eta - self.log_var_eta_prior - (mu_eta.pow(2) + log_var_eta.exp())/ self.log_var_eta_prior.exp() , dim=-1)
         KLD_tau = -0.5 * torch.sum(1 + log_var_tau - self.log_var_tau_prior - (mu_tau.pow(2) + log_var_tau.exp())/ self.log_var_tau_prior.exp(), dim=-1)

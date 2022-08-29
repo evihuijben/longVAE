@@ -10,7 +10,7 @@ class VAEOptions(BaseOptions):
         super().__init__()
         self.parser.add_argument('--network_name', type=str, default='default', help="network structure: ['default', 'celeba', 'adni']")
         self.parser.add_argument('--latent_dim', type=int, default=8, help="Number of features in the latent space")
-        
+
     def parse(self):
         """
         Parse arguments and initialize them
@@ -25,8 +25,4 @@ class VAEOptions(BaseOptions):
         self.initialize()
         
         self.opt.savedir = os.path.join(self.opt.savedir, 'VAE', self.opt.dataset_name)
-        return self.opt   
-        
-    
-    
- 
+        return self.opt

@@ -1,8 +1,8 @@
 import os
 import torch
+import math
 from torch.utils.data import DataLoader
 
-    
 class EmbeddingDataset(torch.utils.data.Dataset):
     # Dataset class for feature processing
     def __init__(self, embeddings, varying_length=False, **kwargs):
@@ -39,7 +39,6 @@ class EmbeddingDataset(torch.utils.data.Dataset):
             sample['mask'] = mask.to(x.device)
         return sample
 
-
 def normalize_times_for_varying_length(times):
     """
     Normalize observation times between 0 and 1 for the minimum and maximum
@@ -63,7 +62,7 @@ def normalize_times_for_varying_length(times):
     for i in range(len(times)):
         times[i] = (times[i] - min_time) / (max_time - min_time)
     return times
-
+    
 def extract_features(opt, vae_model, data):
     """
     Extract features by inputting the image data into the encoder of the VAE
@@ -87,6 +86,7 @@ def extract_features(opt, vae_model, data):
     vae_model.to(opt.device)
     vae_model.eval()
     with torch.no_grad():
+
         all_embeds = []
         if opt.varying_length:
             for batch in data:
@@ -97,26 +97,22 @@ def extract_features(opt, vae_model, data):
                 this_embed = vae_model.encoder(inp).embedding.detach()
                 all_embeds.append(this_embed.reshape(-1, vae_model.latent_dim))
                 
-            
         else:
+            data = data.reshape(-1, opt.n_channels, opt.isize, opt.isize)            
             if opt.batchsize_VAE_eval == None:
                 this_batchsize = data.shape[0]
             else:
                 this_batchsize = opt.batchsize_VAE_eval
-            
-            data = data.reshape(-1, opt.n_channels, opt.isize, opt.isize)
-            this_loader = DataLoader(data.type(torch.float).to(opt.device), 
-                                 batch_size=this_batchsize, 
-                                 shuffle=False)
-            for batch in this_loader:
-                this_embed = vae_model.encoder(batch).embedding.detach()
-                all_embeds.append(this_embed.reshape(-1, 
-                                                     opt.n_steps, 
-                                                     vae_model.latent_dim))
-            all_embeds = torch.cat(all_embeds, dim=0)
-    return all_embeds
-    
 
+            all_embeds = []
+            for batch_i in range(int(math.ceil(data.shape[0]/this_batchsize))):
+                start = batch_i*this_batchsize
+                stop = min([(batch_i+1)*this_batchsize, data.shape[0]])
+                this_embed = vae_model.encoder(data[start : stop].type(torch.float).to(opt.device))
+                all_embeds.append(this_embed.embedding.detach().reshape(-1, opt.n_steps, vae_model.latent_dim))
+            all_embeds = torch.cat(all_embeds, dim=0)
+    return all_embeds   
+    
 def load_data_longVAE(opt, vae_model):
     """
     
@@ -138,11 +134,6 @@ def load_data_longVAE(opt, vae_model):
     shuffles = {'train': True, 
                 'val': False, 
                 'test': False}
-    
-    bs = {'train': opt.batchsize_train, 
-          'val': opt.batchsize_eval,
-          'test': opt.batchsize_eval}
-
         
     embedding_loaders = {}
     for phase in opt.splits:
@@ -153,8 +144,8 @@ def load_data_longVAE(opt, vae_model):
             times = normalize_times_for_varying_length(loaded['times'])
         else:
             if phase == 'train' and opt.missing_data_prob>=0 and opt.missing_data_prob<1:
-                # load data containing masked observations that were
-                # artificially removed by sampling
+                 # load data containing masked observations that were
+                 # artificially removed by sampling
                 loaded = torch.load(os.path.join(opt.dataroot, f'{phase}_missing_{opt.missing_data_prob}.pt'),
                                     map_location=opt.device)
                 mask = loaded['mask']            
@@ -169,20 +160,13 @@ def load_data_longVAE(opt, vae_model):
         embeddings = extract_features(opt, vae_model, datatensor)
         if opt.varying_length:
             dataset = EmbeddingDataset(embeddings, opt.varying_length, times=times)
-            this_batchsize=1
+            this_batchsize = 1
         else:
             dataset = EmbeddingDataset(embeddings, opt.varying_length, mask=mask)
-            if  bs[phase] == None:
-                this_batchsize = embeddings.shape[0]
-            else:
-                this_batchsize =  bs[phase]
-                
+            this_batchsize = opt.batchsize
+
         # Create dataloader for embeddings
         embedding_loaders[phase] = DataLoader(dataset,
                                               batch_size=this_batchsize, 
                                               shuffle=shuffles[phase])
-        
     return embedding_loaders
-
-
-    

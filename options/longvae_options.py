@@ -17,8 +17,7 @@ class LongVAEOptions(BaseOptions):
         self.parser.add_argument('--hidden', type=int, default=512, help='Number of featues in hidden layer of RNN')
         self.parser.add_argument('--save_freq', type=int, default=1000, help='Frequency for intermediate saving of model weights')
         
-        self.parser.add_argument('--batchsize_eval', type=int, default=None, help='Batchsize evaluation step of longVAE. If None: size of evaluation dataset')
-        self.parser.add_argument('--batchsize_VAE_eval', type=int, default=100, help='Batchsize for inference of pretrained VAE')
+        self.parser.add_argument('--batchsize_VAE_eval', type=int, default=None, help='Batchsize for inference of pretrained VAE')
         
         self.parser.add_argument('--no_train', action='store_true', help="Set to true if a pretrained model should be loaded for inference")
         self.parser.add_argument('--pretrained_longVAE_ID', type=str, help="ID of a pretrained model which can be used for generation, imputation and synthesis")
