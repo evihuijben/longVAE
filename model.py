@@ -148,7 +148,7 @@ class LongVAE(nn.Module):
 
         # Calculating the trajevtory based on spatial parameters, eta and tau
         l = eta.exp()* (eval_visit_time - tau) # [B, T]
-        
+
         l_t = torch.cat((l.unsqueeze(1), 
                          lbd.unsqueeze(-1).expand(-1, -1, len(eval_visit_time))
                          ), dim=1) # [B, D, T]

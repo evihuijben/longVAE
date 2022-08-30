@@ -143,7 +143,7 @@ def load_data_longVAE(opt, vae_model):
             datatensor = loaded['data']
             times = normalize_times_for_varying_length(loaded['times'])
         else:
-            if phase == 'train' and opt.missing_data_prob>=0 and opt.missing_data_prob<1:
+            if opt.missing_data_prob>=0 and opt.missing_data_prob<1:
                  # load data containing masked observations that were
                  # artificially removed by sampling
                 loaded = torch.load(os.path.join(opt.dataroot, f'{phase}_missing_{opt.missing_data_prob}.pt'),

@@ -1,5 +1,6 @@
 __pycache__
-trained_models
+trained_models/
+generated/
 
 # Dataset ignores
 datasets/*/train*.pt
