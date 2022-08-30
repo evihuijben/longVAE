@@ -19,8 +19,12 @@ class LongVAEOptions(BaseOptions):
         
         self.parser.add_argument('--batchsize_VAE_eval', type=int, default=None, help='Batchsize for inference of pretrained VAE')
         
+        # Parameters for synthesis
         self.parser.add_argument('--no_train', action='store_true', help="Set to true if a pretrained model should be loaded for inference")
         self.parser.add_argument('--pretrained_longVAE_ID', type=str, help="ID of a pretrained model which can be used for generation, imputation and synthesis")
+        self.parser.add_argument('--longVAE_load_epoch', type=int, help="Which saved epoch is used for inference. If no is provided, the best epoch on validation set is used.")
+        self.parser.add_argument('--eval_times', type=str, help="At what times times the mapping function should be evaluated when using varying lenght sequences")
+        
         
     def parse(self):
         """
@@ -34,8 +38,7 @@ class LongVAEOptions(BaseOptions):
 
         """
         self.opt = self.parser.parse_args()
-        self.initialize()
-        
+        self.initialize()        
         
         # initialize specific arguments for longVAE based on the pretrained VAE
         self.opt.trained_VAE_path = os.path.join(self.opt.savedir, 
@@ -50,8 +53,25 @@ class LongVAEOptions(BaseOptions):
         
         # Define new time stamp for longVAE training
         if self.opt.no_train:
+            self.opt.splits = [self.opt.eval_phase]
             self.opt.ID = self.opt.pretrained_longVAE_ID
+            if self.opt.longVAE_load_epoch == None:
+                fname = "Epoch_best"
+            else:
+                fname = f"Epoch_{self.opt.longVAE_load_epoch}"
+            if self.opt.varying_length:
+                if self.opt.eval_times != None:
+                    fname += f"__eval_times_{self.opt.eval_times}"
+                    self.opt.eval_times = self.opt.eval_times.split(",")
+                
+            self.opt.generated_dir = os.path.join('generated', 
+                                                  self.opt.dataset_name,
+                                                  f"{self.opt.run}--{self.opt.ID}",
+                                                  fname)
+            os.makedirs(self.opt.generated_dir, exist_ok=True)
+            
         else:
+            self.opt.splits = ['train', self.opt.eval_phase]
             signature = (str(datetime.datetime.now())[0:19].replace(" ", "_").replace(":", "-"))
             self.opt.ID = f"longVAE_training_{signature}"
         

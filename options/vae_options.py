@@ -23,6 +23,7 @@ class VAEOptions(BaseOptions):
         """
         self.opt = self.parser.parse_args()
         self.initialize()
+        self.opt.splits = ['train', self.opt.eval_phase]
         
         self.opt.savedir = os.path.join(self.opt.savedir, 'VAE', self.opt.dataset_name)
         return self.opt

@@ -45,7 +45,6 @@ class BaseOptions():
 
         """
         self.opt.dataroot = os.path.join(self.opt.dataroot, self.opt.dataset_name)
-        self.opt.splits = ['train', self.opt.eval_phase]
         
         # Set device
         if not torch.cuda.is_available():
