@@ -2,7 +2,7 @@
 
 This repository contains the code corresponding with the following paper:
 
-> Chadebec, C.<sup>\*</sup>, Huijben, E.M.C.<sup>\*</sup>, Pluim, J.P.W., Allassonnière, S.<sup>†</sup>, and Van Eijnatten M.A.J.M.<sup>†</sup>.<br> "An Image Feature Mapping Model for Continuous Longitudinal Data Completion and Generation of Synthetic Patient Trajectories". In DGM4MICCAI 2022. Held in Conjunction with MICCAI 2022, Singapore, September 22, 2022.
+> [Chadebec, C.<sup>\*</sup>, Huijben, E.M.C.<sup>\*</sup>, Pluim, J.P.W., Allassonnière, S.<sup>†</sup>, van Eijnatten, M.A.J.M.<sup>†</sup> An Image Feature Mapping Model for Continuous Longitudinal Data Completion and Generation of Synthetic Patient Trajectories. In: Deep Generative Model (DGM4MICCAI) 2022. Lecture Notes in Computer Science, vol 13609. Springer, Cham.](https://link.springer.com/chapter/10.1007/978-3-031-18576-2_6)
 
 > **Abstract:** *Longitudinal medical image data are becoming increasingly important for monitoring patient progression. However, such datasets are often small, incomplete, or have inconsistencies between observations. Thus, we propose a generative model that not only produces continuous trajectories of fully synthetic patient images, but also imputes missing data in existing trajectories, by estimating realistic progression over time. Our generative model is trained directly on features extracted from images and maps these into a linear trajectory in a Euclidean space defined with velocity, delay, and spatial parameters that are learned directly from the data. We evaluated our method on toy data and face images, both showing simulated trajectories mimicking progression in longitudinal data. Furthermore, we applied the proposed model on a complex neuroimaging database extracted from ADNI. All datasets show that the model is able to learn overall (disease) progression over time.*
 
@@ -21,4 +21,22 @@ To pretrain the VAE, run the 'train_VAE.py' file with the desired parameters. Th
 To train the generative model, run the 'train_longVAE.py' file with the desired parameters. The paramters for reproducing the experiments from the paper can be seen in 'script.sh'
 
 # Citing
-TBD
+```bibtex
+@InProceedings{ChadebecHuijben2022,
+author="Chadebec, Cl{\'e}ment
+and Huijben, Evi M. C.
+and Pluim, Josien P. W.
+and Allassonni{\`e}re, St{\'e}phanie
+and van Eijnatten, Maureen A. J. M.",
+title="An Image Feature Mapping Model for Continuous Longitudinal Data Completion and Generation of Synthetic Patient Trajectories",
+booktitle="Deep Generative Models (DGM4MICCAI)",
+year="2022",
+publisher="Springer Nature Switzerland",
+address="Cham",
+pages="55--64",
+}
+
+```
+
+
+Chadebec, C., Huijben, E.M.C., Pluim, J.P.W., Allassonnière, S., van Eijnatten, M.A.J.M. An Image Feature Mapping Model for Continuous Longitudinal Data Completion and Generation of Synthetic Patient Trajectories. In: Deep Generative Model (DGM4MICCAI) 2022. Lecture Notes in Computer Science, vol 13609. Springer, Cham.
