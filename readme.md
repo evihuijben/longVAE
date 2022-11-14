@@ -31,12 +31,9 @@ and van Eijnatten, Maureen A. J. M.",
 title="An Image Feature Mapping Model for Continuous Longitudinal Data Completion and Generation of Synthetic Patient Trajectories",
 booktitle="Deep Generative Models (DGM4MICCAI)",
 year="2022",
-publisher="Springer Nature Switzerland",
+publisher="Springer",
 address="Cham",
 pages="55--64",
 }
 
 ```
-
-
-Chadebec, C., Huijben, E.M.C., Pluim, J.P.W., Allassonnière, S., van Eijnatten, M.A.J.M. An Image Feature Mapping Model for Continuous Longitudinal Data Completion and Generation of Synthetic Patient Trajectories. In: Deep Generative Model (DGM4MICCAI) 2022. Lecture Notes in Computer Science, vol 13609. Springer, Cham.
